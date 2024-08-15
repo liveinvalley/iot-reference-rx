@@ -41,6 +41,8 @@
 
 #include "mbedtls/private_access.h"
 
+#include "psa/crypto.h"
+
 /* Standard includes. */
 #include <string.h>
 
@@ -285,6 +287,14 @@ static TlsTransportStatus_t tlsSetup( NetworkContext_t * pNetworkContext,
 
         /* Per mbed TLS docs, mbedtls_ssl_config_defaults only fails on memory allocation. */
         returnStatus = TLS_TRANSPORT_INSUFFICIENT_MEMORY;
+    }
+
+    mbedtlsError = psa_crypto_init();
+
+    if( mbedtlsError != PSA_SUCCESS )
+    {
+    	 LogError( ( "Failed to initialize PSA Crypto implementation: %s", ( int ) mbedtlsError ) );
+    	 returnStatus = TLS_TRANSPORT_INVALID_PARAMETER;
     }
 
     if( returnStatus == TLS_TRANSPORT_SUCCESS )
