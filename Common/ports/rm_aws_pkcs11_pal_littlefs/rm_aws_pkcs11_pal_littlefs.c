@@ -52,7 +52,7 @@
 #include <lfs_util_config.h>
 
 
-#include "transport_mbedtls_pkcs11.h"
+#include "transport_mbedtls_psa.h"
 
 /* mbedTLS includes. */
 #if !defined( MBEDTLS_CONFIG_FILE )

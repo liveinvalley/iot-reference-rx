@@ -55,7 +55,7 @@
 #include "backoff_algorithm.h"
 
 /* Transport interface implementation include header for TLS. */
-#include "transport_mbedtls_pkcs11.h"
+#include "transport_mbedtls_psa.h"
 
 /* Demo specific config. */
 #include "demo_config.h"
