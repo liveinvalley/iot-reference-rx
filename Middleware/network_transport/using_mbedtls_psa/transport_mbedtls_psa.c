@@ -68,6 +68,8 @@
 #include "strnlen.h"
 #endif
 
+#include "psa_builtin_keys.h"
+
 /*-----------------------------------------------------------*/
 
 /**
@@ -603,79 +605,16 @@ static CK_RV readCertificateIntoContext( SSLContext_t * pSslContext,
 static CK_RV initializeClientKeys( SSLContext_t * pxCtx,
                                    const char * pcLabelName )
 {
-    CK_RV xResult = CKR_OK;
-    CK_SLOT_ID * pxSlotIds = NULL;
-    CK_ULONG xCount = 0;
-    CK_ATTRIBUTE xTemplate[ 2 ];
-    mbedtls_pk_type_t xKeyAlgo = ( mbedtls_pk_type_t ) ~0;
+	psa_key_handle_t handle;
+	if (psa_open_key(PSA_KEY_ID_BUILTIN_IOTREFERENCE_RX_DEVICE_PRIVATE_KEY, &handle) != PSA_SUCCESS) {
+		return CKR_KEY_HANDLE_INVALID;
+	}
 
-    /* Get the PKCS #11 module/token slot count. */
-    if( CKR_OK == xResult )
-    {
-        xResult = ( BaseType_t ) pxCtx->pxP11FunctionList->C_GetSlotList( CK_TRUE,
-                                                                          NULL,
-                                                                          &xCount );
-    }
+	if (mbedtls_pk_setup_opaque(&pxCtx->privKey, handle) != 0) {
+		return CKR_KEY_HANDLE_INVALID;
+	}
 
-    /* Allocate memory to store the token slots. */
-    if( CKR_OK == xResult )
-    {
-        pxSlotIds = ( CK_SLOT_ID * ) pvPortMalloc( sizeof( CK_SLOT_ID ) * xCount );
-
-        if( NULL == pxSlotIds )
-        {
-            xResult = CKR_HOST_MEMORY;
-        }
-    }
-
-    /* Get all of the available private key slot identities. */
-    if( CKR_OK == xResult )
-    {
-        xResult = ( BaseType_t ) pxCtx->pxP11FunctionList->C_GetSlotList( CK_TRUE,
-                                                                          pxSlotIds,
-                                                                          &xCount );
-    }
-
-    /* Put the module in authenticated mode. */
-    if( CKR_OK == xResult )
-    {
-        xResult = ( BaseType_t ) pxCtx->pxP11FunctionList->C_Login( pxCtx->xP11Session,
-                                                                    CKU_USER,
-                                                                    ( CK_UTF8CHAR_PTR ) pkcs11configPKCS11_DEFAULT_USER_PIN,
-                                                                    sizeof( pkcs11configPKCS11_DEFAULT_USER_PIN ) - 1 );
-    }
-
-    if( CKR_OK == xResult )
-    {
-        /* Get the handle of the device private key. */
-        xResult = xFindObjectWithLabelAndClass( pxCtx->xP11Session,
-                                                pcLabelName,
-                                                strnlen( pcLabelName,
-                                                         pkcs11configMAX_LABEL_LENGTH ),
-                                                CKO_PRIVATE_KEY,
-                                                &pxCtx->xP11PrivateKey );
-    }
-
-    if( ( CKR_OK == xResult ) && ( pxCtx->xP11PrivateKey == CK_INVALID_HANDLE ) )
-    {
-        xResult = CK_INVALID_HANDLE;
-        LogError( ( "Could not find private key." ) );
-    }
-
-    if( xResult == CKR_OK )
-    {
-        xResult = xPKCS11_initMbedtlsPkContext( &( pxCtx->privKey ),
-                                                pxCtx->xP11Session,
-                                                pxCtx->xP11PrivateKey );
-    }
-
-    /* Free memory. */
-    if( pxSlotIds!= NULL )
-    {
-        vPortFree( pxSlotIds );
-    }
-
-    return xResult;
+    return CKR_OK;
 }
 
 /*-----------------------------------------------------------*/
