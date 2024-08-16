@@ -1,6 +1,6 @@
 [submodule "Middleware/3rdparty/mbedtls"]
 	path = Middleware/3rdparty/mbedtls
-	url = https://github.com/Mbed-TLS/mbedtls.git
+	url = https://github.com/liveinvalley/mbedtls.git
 [submodule "Middleware/AWS/Device-Defender-for-AWS-IoT-embedded-sdk"]
 	path = Middleware/AWS/Device-Defender-for-AWS-IoT-embedded-sdk
 	url = https://github.com/aws/Device-Defender-for-AWS-IoT-embedded-sdk.git
