@@ -88,3 +88,18 @@ psa_status_t psa_driver_iotreference_rx_generate_key(
 		return PSA_ERROR_DOES_NOT_EXIST;
 	}
 }
+
+psa_status_t psa_driver_iotreference_rx_export_public_key(
+    const psa_key_attributes_t *attributes,
+    const uint8_t *key_buffer, size_t key_buffer_size,
+    uint8_t *data, size_t data_size, size_t *data_length )
+{
+	psa_drv_slot_number_t slot_number =  *((psa_drv_slot_number_t *) key_buffer);
+	switch (slot_number) {
+	case PSA_DRV_SLOT_IOTREFERENCE_RX_DEVICE_PRIVATE_KEY:
+		return psa_export_public_key_internal(attributes, g_key_buffer, g_key_buffer_size, data, data_size, data_length);
+
+	default:
+		return PSA_ERROR_DOES_NOT_EXIST;
+	}
+}
