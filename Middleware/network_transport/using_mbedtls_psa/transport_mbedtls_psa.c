@@ -605,16 +605,11 @@ static CK_RV readCertificateIntoContext( SSLContext_t * pSslContext,
 static CK_RV initializeClientKeys( SSLContext_t * pxCtx,
                                    const char * pcLabelName )
 {
-	psa_key_handle_t handle;
-	if (psa_open_key(PSA_KEY_ID_BUILTIN_IOTREFERENCE_RX_DEVICE_PRIVATE_KEY, &handle) != PSA_SUCCESS) {
+	if (mbedtls_pk_setup_opaque(&pxCtx->privKey, PSA_KEY_ID_USER_MIN) != 0) {
 		return CKR_KEY_HANDLE_INVALID;
 	}
 
-	if (mbedtls_pk_setup_opaque(&pxCtx->privKey, handle) != 0) {
-		return CKR_KEY_HANDLE_INVALID;
-	}
-
-    return CKR_OK;
+	return CKR_OK;
 }
 
 /*-----------------------------------------------------------*/
