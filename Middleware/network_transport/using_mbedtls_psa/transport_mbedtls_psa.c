@@ -68,7 +68,9 @@
 #include "strnlen.h"
 #endif
 
-#include "psa_builtin_keys.h"
+#include "psa/crypto.h"
+#include "application_psa_key_id.h"
+
 
 /*-----------------------------------------------------------*/
 

@@ -63,6 +63,9 @@
 #include "strnlen.h"
 #endif
 
+#include "psa/crypto.h"
+#include "application_psa_key_id.h"
+
 /* Length parameters for importing RSA-2048 private keys. */
 #define MODULUS_LENGTH        pkcs11RSA_2048_MODULUS_BITS / 8
 #define E_LENGTH              3
@@ -285,16 +288,24 @@ bool xGenerateKeyAndCsr( CK_SESSION_HANDLE xP11Session,
     configASSERT( pcCsrBuffer != NULL );
     configASSERT( pxOutCsrLength != NULL );
 
-    xPkcs11Ret = prvGenerateKeyPairEC( xP11Session,
-                                       pcPrivKeyLabel,
-                                       pcPubKeyLabel,
-                                       &xPrivKeyHandle,
-                                       &xPubKeyHandle );
+	psa_destroy_key(PSA_KEY_ID_IOTREFERENCE_RX_DEVICE_PRIVATE_KEY);
 
-    if( xPkcs11Ret == CKR_OK )
-    {
-        xPkcs11Ret = xPKCS11_initMbedtlsPkContext( &xPrivKey, xP11Session, xPrivKeyHandle );
-    }
+	psa_key_attributes_t attributes = psa_key_attributes_init();
+	psa_set_key_type(&attributes, PSA_KEY_TYPE_ECC_KEY_PAIR(PSA_ECC_FAMILY_SECP_R1));
+	psa_set_key_bits(&attributes, 256);
+	psa_set_key_usage_flags(&attributes,PSA_KEY_USAGE_SIGN_HASH);
+	psa_set_key_algorithm(&attributes, PSA_ALG_ECDSA(PSA_ALG_SHA_256));
+	psa_set_key_id(&attributes, PSA_KEY_ID_IOTREFERENCE_RX_DEVICE_PRIVATE_KEY);
+	psa_set_key_lifetime(&attributes, PSA_KEY_LIFETIME_PERSISTENT);
+
+	psa_key_id_t keypair;
+	if (psa_generate_key(&attributes, &keypair) != PSA_SUCCESS) {
+		return CKR_KEY_HANDLE_INVALID;
+	}
+
+	if (mbedtls_pk_setup_opaque(&xPrivKey, PSA_KEY_ID_IOTREFERENCE_RX_DEVICE_PRIVATE_KEY) != 0) {
+		return CKR_KEY_HANDLE_INVALID;
+	}
 
     if( xPkcs11Ret == CKR_OK )
     {
