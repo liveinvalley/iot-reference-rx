@@ -46,7 +46,6 @@
 #include "core_pkcs11_config.h"
 #include "core_pki_utils.h"
 #include "mbedtls_utils.h"
-#include "mbedtls_pk_pkcs11.h"
 
 /* MbedTLS include. */
 #include "mbedtls/error.h"
@@ -147,6 +146,19 @@ static CK_RV provisionPrivateECKey( CK_SESSION_HANDLE session,
 static CK_RV provisionPrivateRSAKey( CK_SESSION_HANDLE session,
                                      const char * label,
                                      mbedtls_pk_context * mbedPkContext );
+
+/**
+ * @brief Callback to generate random data with the PKCS11 module.
+ *
+ * @param[in] pvCtx void pointer to the
+ * @param[in] pucRandom Byte array to fill with random data.
+ * @param[in] xRandomLength Length of byte array.
+ *
+ * @return 0 on success.
+ */
+static int lPKCS11RandomCallback( void * pvCtx,
+                           unsigned char * pucOutput,
+                           size_t uxLen );
 
 /*-----------------------------------------------------------*/
 
@@ -947,3 +959,42 @@ CK_RV xDestroyCertificateAndKey( CK_SESSION_HANDLE xP11Session)
 }
 
 /*-----------------------------------------------------------*/
+
+static int lPKCS11RandomCallback( void * pvCtx,
+                           unsigned char * pucOutput,
+                           size_t uxLen )
+{
+    int lRslt;
+    CK_FUNCTION_LIST_PTR pxFunctionList = NULL;
+    CK_SESSION_HANDLE * pxSessionHandle = ( CK_SESSION_HANDLE * ) pvCtx;
+
+    if( pucOutput == NULL )
+    {
+        lRslt = -1;
+    }
+    else if( pvCtx == NULL )
+    {
+        lRslt = -1;
+        LogError( ( "pvCtx must not be NULL." ) );
+    }
+    else
+    {
+        lRslt = ( int ) C_GetFunctionList( &pxFunctionList );
+    }
+
+    if( ( lRslt != CKR_OK ) ||
+        ( pxFunctionList == NULL ) ||
+        ( pxFunctionList->C_GenerateRandom == NULL ) )
+    {
+        lRslt = -1;
+    }
+    else
+    {
+        lRslt = ( int ) pxFunctionList->C_GenerateRandom( *pxSessionHandle, pucOutput, uxLen );
+    }
+
+    return lRslt;
+}
+
+/*-----------------------------------------------------------*/
+
